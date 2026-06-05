@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID 转换工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 28px;
+        }
+        .section {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        #input {
+            height: 150px;
+        }
+        #output {
+            height: 100px;
+            background: #f8f9ff;
+            word-break: break-all;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .convert-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .convert-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        .convert-btn:active {
+            transform: translateY(0);
+        }
+        .copy-btn {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .copy-btn:hover {
+            background: #e0e0e0;
+        }
+        .copy-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .clear-btn {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .clear-btn:hover {
+            background: #ffcdd2;
+        }
+        .info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            border-radius: 4px;
+            color: #1565c0;
+            font-size: 12px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .success-msg {
+            color: #2e7d32;
+            font-size: 12px;
+            margin-top: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 ID 转换工具</h1>
+
+        <div class="info">
+            <strong>使用说明：</strong>在左侧粘贴竖排的 ID（每行一个），点击"转换"即可生成逗号分隔的结果。支持清理空行和空格。
+        </div>
+
+        <div class="section">
+            <label for="input">输入 ID（竖排格式）：</label>
+            <textarea id="input" placeholder="请粘贴竖排的 ID，每行一个&#10;例如：&#10;123&#10;456&#10;789"></textarea>
+        </div>
+
+        <div class="section">
+            <label for="output">输出结果：</label>
+            <textarea id="output" readonly placeholder="转换结果将显示在这里"></textarea>
+            <div class="success-msg" id="successMsg">✓ 已复制到剪贴板</div>
+        </div>
+
+        <div class="button-group">
+            <button class="convert-btn" onclick="convertIds()">转 换</button>
+            <button class="copy-btn" id="copyBtn" onclick="copyOutput()" disabled>复 制</button>
+            <button class="clear-btn" onclick="clearAll()">清 空</button>
+        </div>
+    </div>
+
+    <script>
+        function convertIds() {
+            const input = document.getElementById('input').value;
+            const output = document.getElementById('output');
+            const copyBtn = document.getElementById('copyBtn');
+
+            // 分割并清理
+            const ids = input
+                .split('\n')
+                .map(id => id.trim())
+                .filter(id => id !== '');
+
+            if (ids.length === 0) {
+                output.value = '';
+                copyBtn.disabled = true;
+                return;
+            }
+
+            // 转换为逗号分隔
+            const result = ids.join(',');
+            output.value = result;
+            copyBtn.disabled = false;
+        }
+
+        function copyOutput() {
+            const output = document.getElementById('output');
+            if (!output.value) return;
+
+            // 方法1：使用现代 Clipboard API
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(output.value)
+                    .then(() => {
+                        showCopySuccess();
+                    })
+                    .catch(() => {
+                        fallbackCopy(output.value);
+                    });
+            } else {
+                // 方法2：备用方案（老浏览器）
+                fallbackCopy(output.value);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showCopySuccess();
+            } catch (err) {
+                alert('复制失败，请手动复制');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showCopySuccess() {
+            const msg = document.getElementById('successMsg');
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 2000);
+        }
+
+        function clearAll() {
+            document.getElementById('input').value = '';
+            document.getElementById('output').value = '';
+            document.getElementById('copyBtn').disabled = true;
+            document.getElementById('successMsg').style.display = 'none';
+        }
+
+        // 回车快速转换
+        document.getElementById('input').addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                convertIds();
+            }
+        });
+    </script>
+</body>
+</html>
