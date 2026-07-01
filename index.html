@@ -125,6 +125,25 @@
             margin-top: 8px;
             display: none;
         }
+        .stats {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #666;
+            display: none;
+        }
+        .stats.show {
+            display: block;
+        }
+        .dedup-btn {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .dedup-btn:hover {
+            background: #ffeaa7;
+        }
     </style>
 </head>
 <body>
@@ -144,37 +163,80 @@
             <label for="output">输出结果：</label>
             <textarea id="output" readonly placeholder="转换结果将显示在这里"></textarea>
             <div class="success-msg" id="successMsg">✓ 已复制到剪贴板</div>
+            <div class="stats" id="stats"></div>
         </div>
 
         <div class="button-group">
             <button class="convert-btn" onclick="convertIds()">转 换</button>
+            <button class="dedup-btn" id="dedupBtn" onclick="dedupIds()" disabled>去 重</button>
             <button class="copy-btn" id="copyBtn" onclick="copyOutput()" disabled>复 制</button>
             <button class="clear-btn" onclick="clearAll()">清 空</button>
         </div>
     </div>
 
     <script>
+        let currentIds = []; // 存储当前的ID列表
+
         function convertIds() {
             const input = document.getElementById('input').value;
             const output = document.getElementById('output');
             const copyBtn = document.getElementById('copyBtn');
+            const dedupBtn = document.getElementById('dedupBtn');
+            const stats = document.getElementById('stats');
 
             // 分割并清理
-            const ids = input
+            currentIds = input
                 .split('\n')
                 .map(id => id.trim())
                 .filter(id => id !== '');
 
-            if (ids.length === 0) {
+            if (currentIds.length === 0) {
                 output.value = '';
                 copyBtn.disabled = true;
+                dedupBtn.disabled = true;
+                stats.classList.remove('show');
                 return;
             }
 
             // 转换为逗号分隔
-            const result = ids.join(',');
+            const result = currentIds.join(',');
             output.value = result;
             copyBtn.disabled = false;
+            dedupBtn.disabled = false;
+
+            // 显示统计信息
+            showStats(currentIds.length, new Set(currentIds).size);
+        }
+
+        function dedupIds() {
+            if (currentIds.length === 0) return;
+
+            // 去重
+            const uniqueIds = [...new Set(currentIds)];
+            const duplicateCount = currentIds.length - uniqueIds.length;
+
+            // 更新输出
+            const output = document.getElementById('output');
+            output.value = uniqueIds.join(',');
+            currentIds = uniqueIds;
+
+            // 更新统计信息
+            showStats(uniqueIds.length, uniqueIds.length, duplicateCount);
+        }
+
+        function showStats(total, unique, removed = 0) {
+            const stats = document.getElementById('stats');
+            if (removed > 0) {
+                stats.innerHTML = `📊 总计: ${total} 个 ID | 去重后: ${unique} 个 | 移除: ${removed} 个重复`;
+            } else {
+                const dupCount = total - unique;
+                if (dupCount > 0) {
+                    stats.innerHTML = `📊 总计: ${total} 个 ID | 唯一: ${unique} 个 | 重复: ${dupCount} 个`;
+                } else {
+                    stats.innerHTML = `📊 总计: ${total} 个 ID | 无重复`;
+                }
+            }
+            stats.classList.add('show');
         }
 
         function copyOutput() {
@@ -222,7 +284,10 @@
             document.getElementById('input').value = '';
             document.getElementById('output').value = '';
             document.getElementById('copyBtn').disabled = true;
+            document.getElementById('dedupBtn').disabled = true;
             document.getElementById('successMsg').style.display = 'none';
+            document.getElementById('stats').classList.remove('show');
+            currentIds = [];
         }
 
         // 回车快速转换
