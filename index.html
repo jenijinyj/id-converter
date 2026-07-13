@@ -172,6 +172,12 @@
             <button class="copy-btn" id="copyBtn" onclick="copyOutput()" disabled>复 制</button>
             <button class="clear-btn" onclick="clearAll()">清 空</button>
         </div>
+
+        <div class="button-group" style="margin-top: 15px;">
+            <button class="convert-btn" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);" onclick="reverseConvert()">⬅️ 反向转换</button>
+            <button class="copy-btn" id="reverseCopyBtn" onclick="copyReverse()" disabled>复 制</button>
+            <button class="clear-btn" onclick="clearReverse()">清 空</button>
+        </div>
     </div>
 
     <script>
@@ -239,6 +245,40 @@
             stats.classList.add('show');
         }
 
+        function reverseConvert() {
+            const output = document.getElementById('output');
+            if (!output.value) return;
+
+            // 分割逗号、空格、换行等分隔符
+            const ids = output.value
+                .split(/[,\s]+/)
+                .map(id => id.trim())
+                .filter(id => id !== '');
+
+            if (ids.length === 0) {
+                document.getElementById('input').value = '';
+                document.getElementById('reverseCopyBtn').disabled = true;
+                return;
+            }
+
+            // 转换为竖排格式
+            const result = ids.join('\n');
+            document.getElementById('input').value = result;
+            document.getElementById('reverseCopyBtn').disabled = false;
+        }
+
+        function reverseFromInput() {
+            const input = document.getElementById('input');
+            const output = document.getElementById('output');
+
+            if (!output.value) {
+                alert('请先在右侧输入逗号分隔的 ID');
+                return;
+            }
+
+            reverseConvert();
+        }
+
         function copyOutput() {
             const output = document.getElementById('output');
             if (!output.value) return;
@@ -255,6 +295,25 @@
             } else {
                 // 方法2：备用方案（老浏览器）
                 fallbackCopy(output.value);
+            }
+        }
+
+        function copyReverse() {
+            const input = document.getElementById('input');
+            if (!input.value) return;
+
+            // 方法1：使用现代 Clipboard API
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(input.value)
+                    .then(() => {
+                        showCopySuccess();
+                    })
+                    .catch(() => {
+                        fallbackCopy(input.value);
+                    });
+            } else {
+                // 方法2：备用方案（老浏览器）
+                fallbackCopy(input.value);
             }
         }
 
@@ -285,15 +344,28 @@
             document.getElementById('output').value = '';
             document.getElementById('copyBtn').disabled = true;
             document.getElementById('dedupBtn').disabled = true;
+            document.getElementById('reverseCopyBtn').disabled = true;
             document.getElementById('successMsg').style.display = 'none';
             document.getElementById('stats').classList.remove('show');
             currentIds = [];
+        }
+
+        function clearReverse() {
+            document.getElementById('input').value = '';
+            document.getElementById('reverseCopyBtn').disabled = true;
+            document.getElementById('successMsg').style.display = 'none';
         }
 
         // 回车快速转换
         document.getElementById('input').addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'Enter') {
                 convertIds();
+            }
+        });
+
+        document.getElementById('output').addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                reverseConvert();
             }
         });
     </script>
