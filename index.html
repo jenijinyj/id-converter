@@ -202,6 +202,26 @@
         <div class="button-group" style="margin-top: 15px;">
             <button class="clear-btn" onclick="clearAll()">清 空</button>
         </div>
+
+        <div style="border-top: 2px dashed #e0e0e0; margin: 30px 0 20px; padding-top: 20px;">
+            <h2 style="color: #333; font-size: 20px; margin-bottom: 20px; text-align: center;">📅 日期格式转换</h2>
+
+            <div class="section">
+                <label for="dateInput">输入日期（M/D/YYYY 格式）：</label>
+                <textarea id="dateInput" placeholder="请输入日期，例如：&#10;8/5/2026&#10;或多个日期，每行一个" style="height: 80px;"></textarea>
+            </div>
+
+            <div class="section">
+                <label for="dateOutput">输出结果（YYYY-M-D 格式）：</label>
+                <textarea id="dateOutput" readonly placeholder="转换结果将显示在这里" style="height: 80px;"></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="convert-btn" style="background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);" onclick="convertDate()">转 换</button>
+                <button class="copy-btn" id="dateCopyBtn" onclick="copyDate()" disabled>复 制</button>
+                <button class="clear-btn" onclick="clearDate()">清 空</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -457,6 +477,58 @@
             document.getElementById('input').value = '';
             document.getElementById('reverseCopyBtn').disabled = true;
             document.getElementById('successMsg').style.display = 'none';
+        }
+
+        // 日期格式转换：8/5/2026 → 2026-8-5
+        function convertDate() {
+            const input = document.getElementById('dateInput').value;
+            const output = document.getElementById('dateOutput');
+            const copyBtn = document.getElementById('dateCopyBtn');
+
+            const lines = input
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line !== '');
+
+            if (lines.length === 0) {
+                output.value = '';
+                copyBtn.disabled = true;
+                return;
+            }
+
+            const results = lines.map(line => {
+                // 匹配 M/D/YYYY 格式
+                const parts = line.split('/');
+                if (parts.length === 3) {
+                    const month = parts[0].trim();
+                    const day = parts[1].trim();
+                    const year = parts[2].trim();
+                    return `${year}-${month}-${day}`;
+                }
+                return line; // 格式不匹配则原样返回
+            });
+
+            output.value = results.join('\n');
+            copyBtn.disabled = false;
+        }
+
+        function copyDate() {
+            const dateOutput = document.getElementById('dateOutput');
+            if (!dateOutput.value) return;
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(dateOutput.value)
+                    .then(() => showCopySuccess())
+                    .catch(() => fallbackCopy(dateOutput.value));
+            } else {
+                fallbackCopy(dateOutput.value);
+            }
+        }
+
+        function clearDate() {
+            document.getElementById('dateInput').value = '';
+            document.getElementById('dateOutput').value = '';
+            document.getElementById('dateCopyBtn').disabled = true;
         }
 
         // 回车快速转换
