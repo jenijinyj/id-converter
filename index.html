@@ -351,9 +351,9 @@
             const output = document.getElementById('output');
             if (!output.value) return;
 
-            // 分割逗号、空格、换行等分隔符
+            // 只按逗号分割
             const ids = output.value
-                .split(/[,\s]+/)
+                .split(',')
                 .map(id => id.trim())
                 .filter(id => id !== '');
 
