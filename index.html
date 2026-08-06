@@ -17,38 +17,63 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 15px;
         }
         .container {
             background: white;
             border-radius: 12px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
+            max-width: 1200px;
             width: 100%;
-            padding: 40px;
+            padding: 20px 30px;
         }
         h1 {
             color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 12px;
             text-align: center;
-            font-size: 28px;
+            font-size: 22px;
+        }
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .column {
+            display: flex;
+            flex-direction: column;
+        }
+        .panel {
+            background: #fafbff;
+            border: 1px solid #eef0f7;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+        }
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         .section {
-            margin-bottom: 25px;
+            margin-bottom: 10px;
         }
         label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             color: #555;
             font-weight: 500;
-            font-size: 14px;
+            font-size: 12px;
         }
         textarea {
             width: 100%;
-            padding: 12px;
+            padding: 8px;
             border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 6px;
+            font-size: 13px;
             font-family: 'Courier New', monospace;
             resize: vertical;
             transition: border-color 0.3s;
@@ -58,38 +83,47 @@
             border-color: #667eea;
         }
         #input {
-            height: 150px;
+            height: 90px;
         }
         #output {
-            height: 100px;
+            height: 60px;
             background: #f8f9ff;
             word-break: break-all;
         }
+        #prefixOutput, #sqlOutput {
+            height: 50px;
+            background: #f8f9ff;
+            word-break: break-all;
+        }
+        #dateInput, #dateOutput, #timeInput, #timeOutput {
+            height: 60px;
+        }
         .button-group {
             display: flex;
-            gap: 10px;
-            margin-top: 20px;
+            gap: 6px;
+            margin-top: 8px;
         }
         button {
             flex: 1;
-            padding: 12px 20px;
+            padding: 8px 10px;
             border: none;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 6px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
         .convert-btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
         .convert-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 12px rgba(102, 126, 234, 0.3);
         }
-        .convert-btn:active {
-            transform: translateY(0);
+        .convert-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         .copy-btn {
             background: #f0f0f0;
@@ -111,26 +145,26 @@
         }
         .info {
             background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 12px;
+            border-left: 3px solid #2196f3;
+            padding: 8px 12px;
             border-radius: 4px;
             color: #1565c0;
-            font-size: 12px;
-            margin-bottom: 20px;
-            line-height: 1.6;
+            font-size: 11px;
+            margin-bottom: 12px;
+            line-height: 1.5;
         }
         .success-msg {
             color: #2e7d32;
-            font-size: 12px;
-            margin-top: 8px;
+            font-size: 11px;
+            margin-top: 4px;
             display: none;
         }
         .stats {
             background: #f5f5f5;
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 12px;
-            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin-top: 6px;
+            font-size: 11px;
             color: #666;
             display: none;
         }
@@ -144,6 +178,26 @@
         .dedup-btn:hover {
             background: #ffeaa7;
         }
+        .prefix-controls {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+            align-items: center;
+            font-size: 11px;
+            color: #666;
+        }
+        .prefix-controls input {
+            width: 55px;
+            padding: 4px 6px;
+            border: 2px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        @media (max-width: 900px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -151,98 +205,110 @@
         <h1>📝 ID 转换工具</h1>
 
         <div class="info">
-            <strong>使用说明：</strong>在左侧粘贴竖排的 ID（每行一个），点击"转换"即可生成逗号分隔的结果。支持清理空行和空格。
+            <strong>使用说明：</strong>左栏：ID 格式转换（竖排 ↔ 逗号 ↔ SQL）；右栏：日期和时间格式转换。
         </div>
 
-        <div class="section">
-            <label for="input">输入 ID（竖排格式）：</label>
-            <textarea id="input" placeholder="请粘贴竖排的 ID，每行一个&#10;例如：&#10;123&#10;456&#10;789"></textarea>
-        </div>
+        <div class="main-layout">
+            <!-- 左栏：ID 转换 -->
+            <div class="column">
+                <div class="panel">
+                    <div class="panel-title">📋 ID 转换</div>
 
-        <div class="section">
-            <label for="output">输出结果：</label>
-            <textarea id="output" readonly placeholder="转换结果将显示在这里"></textarea>
-            <div class="success-msg" id="successMsg">✓ 已复制到剪贴板</div>
-            <div class="stats" id="stats"></div>
-        </div>
+                    <div class="section">
+                        <label for="input">输入 ID（竖排）：</label>
+                        <textarea id="input" placeholder="请粘贴竖排的 ID，每行一个"></textarea>
+                    </div>
 
-        <div class="section">
-            <label for="prefixOutput">取前 N 位（去重）：</label>
-            <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
-                <label style="margin: 0; font-size: 12px; color: #666;">位数：</label>
-                <input type="number" id="prefixLength" value="6" min="1" max="50" style="width: 70px; padding: 6px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 13px;">
-                <span style="font-size: 12px; color: #999;">（默认取前 6 位）</span>
-            </div>
-            <textarea id="prefixOutput" readonly placeholder="取前 N 位并去重后的结果将显示在这里"></textarea>
-        </div>
+                    <div class="section">
+                        <label for="output">逗号分隔输出：</label>
+                        <textarea id="output" readonly placeholder="转换结果"></textarea>
+                        <div class="success-msg" id="successMsg">✓ 已复制到剪贴板</div>
+                        <div class="stats" id="stats"></div>
+                    </div>
 
-        <div class="section">
-            <label for="sqlOutput">SQL 格式：</label>
-            <textarea id="sqlOutput" readonly placeholder="SQL 格式的结果将显示在这里"></textarea>
-        </div>
+                    <div class="section">
+                        <label for="prefixOutput">取前 N 位（去重）：</label>
+                        <div class="prefix-controls">
+                            <label style="margin: 0;">位数：</label>
+                            <input type="number" id="prefixLength" value="6" min="1" max="50">
+                            <span>（默认 6 位）</span>
+                        </div>
+                        <textarea id="prefixOutput" readonly placeholder="取前 N 位结果"></textarea>
+                    </div>
 
-        <div class="button-group">
-            <button class="convert-btn" onclick="convertIds()">转 换</button>
-            <button class="dedup-btn" id="dedupBtn" onclick="dedupIds()" disabled>去 重</button>
-        </div>
+                    <div class="section">
+                        <label for="sqlOutput">SQL 格式：</label>
+                        <textarea id="sqlOutput" readonly placeholder="SQL 格式结果"></textarea>
+                    </div>
 
-        <div class="button-group" style="margin-top: 10px;">
-            <button class="convert-btn" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);" onclick="reverseConvert()">⬅️ 反向转换</button>
-            <button class="convert-btn" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);" id="sqlBtn" onclick="generateSQL()" disabled>生成 SQL</button>
-            <button class="convert-btn" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);" id="prefixBtn" onclick="extractPrefix()" disabled>取前 N 位 + 去重</button>
-        </div>
+                    <div class="button-group">
+                        <button class="convert-btn" onclick="convertIds()">转 换</button>
+                        <button class="dedup-btn" id="dedupBtn" onclick="dedupIds()" disabled>去 重</button>
+                    </div>
 
-        <div class="button-group" style="margin-top: 10px;">
-            <button class="copy-btn" id="reverseCopyBtn" onclick="copyReverse()" disabled>复制反向</button>
-            <button class="copy-btn" id="copyBtn" onclick="copyOutput()" disabled>复制逗号</button>
-            <button class="copy-btn" id="sqlCopyBtn" onclick="copySql()" disabled>复制 SQL</button>
-            <button class="copy-btn" id="prefixCopyBtn" onclick="copyPrefix()" disabled>复制前 N 位</button>
-        </div>
+                    <div class="button-group">
+                        <button class="convert-btn" style="background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);" onclick="reverseConvert()">⬅️ 反向</button>
+                        <button class="convert-btn" style="background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);" id="sqlBtn" onclick="generateSQL()" disabled>SQL</button>
+                        <button class="convert-btn" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);" id="prefixBtn" onclick="extractPrefix()" disabled>前 N 位</button>
+                    </div>
 
-        <div class="button-group" style="margin-top: 15px;">
-            <button class="clear-btn" onclick="clearAll()">清 空</button>
-        </div>
+                    <div class="button-group">
+                        <button class="copy-btn" id="reverseCopyBtn" onclick="copyReverse()" disabled>复制反向</button>
+                        <button class="copy-btn" id="copyBtn" onclick="copyOutput()" disabled>复制逗号</button>
+                        <button class="copy-btn" id="sqlCopyBtn" onclick="copySql()" disabled>复制 SQL</button>
+                        <button class="copy-btn" id="prefixCopyBtn" onclick="copyPrefix()" disabled>复制前N</button>
+                    </div>
 
-        <div style="border-top: 2px dashed #e0e0e0; margin: 30px 0 20px; padding-top: 20px;">
-            <h2 style="color: #333; font-size: 20px; margin-bottom: 20px; text-align: center;">📅 日期格式转换</h2>
-
-            <div class="section">
-                <label for="dateInput">输入日期（M/D/YYYY 格式）：</label>
-                <textarea id="dateInput" placeholder="请输入日期，例如：&#10;8/5/2026&#10;或多个日期，每行一个" style="height: 80px;"></textarea>
-            </div>
-
-            <div class="section">
-                <label for="dateOutput">输出结果（YYYY-M-D 格式）：</label>
-                <textarea id="dateOutput" readonly placeholder="转换结果将显示在这里" style="height: 80px;"></textarea>
+                    <div class="button-group">
+                        <button class="clear-btn" onclick="clearAll()">清 空</button>
+                    </div>
+                </div>
             </div>
 
-            <div class="button-group">
-                <button class="convert-btn" style="background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);" onclick="convertDate()">转 换</button>
-                <button class="copy-btn" id="dateCopyBtn" onclick="copyDate()" disabled>复 制</button>
-                <button class="clear-btn" onclick="clearDate()">清 空</button>
-            </div>
-        </div>
+            <!-- 右栏：日期和时间转换 -->
+            <div class="column">
+                <div class="panel">
+                    <div class="panel-title">📅 日期格式转换</div>
 
-        <div style="border-top: 2px dashed #e0e0e0; margin: 30px 0 20px; padding-top: 20px;">
-            <h2 style="color: #333; font-size: 20px; margin-bottom: 20px; text-align: center;">🕐 时间格式转换</h2>
+                    <div class="section">
+                        <label for="dateInput">输入（M/D/YYYY）：</label>
+                        <textarea id="dateInput" placeholder="例如：8/5/2026（每行一个）"></textarea>
+                    </div>
 
-            <div class="section">
-                <label for="timeInput">输入时间（24小时制 或 12小时制）：</label>
-                <textarea id="timeInput" placeholder="24小时制示例：&#10;12:00&#10;15:00&#10;&#10;12小时制示例：&#10;12pm&#10;3pm" style="height: 100px;"></textarea>
-            </div>
+                    <div class="section">
+                        <label for="dateOutput">输出（YYYY-M-D）：</label>
+                        <textarea id="dateOutput" readonly placeholder="转换结果"></textarea>
+                    </div>
 
-            <div class="section">
-                <label for="timeOutput">输出结果：</label>
-                <textarea id="timeOutput" readonly placeholder="转换结果将显示在这里" style="height: 100px;"></textarea>
-            </div>
+                    <div class="button-group">
+                        <button class="convert-btn" style="background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);" onclick="convertDate()">转 换</button>
+                        <button class="copy-btn" id="dateCopyBtn" onclick="copyDate()" disabled>复 制</button>
+                        <button class="clear-btn" onclick="clearDate()">清 空</button>
+                    </div>
+                </div>
 
-            <div class="button-group">
-                <button class="convert-btn" style="background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);" onclick="convertTo12Hour()">24h → 12h</button>
-                <button class="convert-btn" style="background: linear-gradient(135deg, #009688 0%, #00695c 100%);" onclick="convertTo24Hour()">12h → 24h</button>
-            </div>
-            <div class="button-group" style="margin-top: 10px;">
-                <button class="copy-btn" id="timeCopyBtn" onclick="copyTime()" disabled>复 制</button>
-                <button class="clear-btn" onclick="clearTime()">清 空</button>
+                <div class="panel">
+                    <div class="panel-title">🕐 时间格式转换</div>
+
+                    <div class="section">
+                        <label for="timeInput">输入（24h 或 12h）：</label>
+                        <textarea id="timeInput" placeholder="例如：15:00 或 3pm（每行一个）"></textarea>
+                    </div>
+
+                    <div class="section">
+                        <label for="timeOutput">输出：</label>
+                        <textarea id="timeOutput" readonly placeholder="转换结果"></textarea>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="convert-btn" style="background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);" onclick="convertTo12Hour()">24h → 12h</button>
+                        <button class="convert-btn" style="background: linear-gradient(135deg, #009688 0%, #00695c 100%);" onclick="convertTo24Hour()">12h → 24h</button>
+                    </div>
+                    <div class="button-group">
+                        <button class="copy-btn" id="timeCopyBtn" onclick="copyTime()" disabled>复 制</button>
+                        <button class="clear-btn" onclick="clearTime()">清 空</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
