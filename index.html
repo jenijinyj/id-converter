@@ -28,6 +28,52 @@
             text-align: center;
             margin-bottom: 24px;
         }
+        /* 右栏顶部：playid转链接 —— 外观直接复用 .panel；文本框复用全局 textarea 样式（等宽字体 + 浅灰底），只把高度调小 */
+        .link-gen textarea {
+            min-height: 50px;
+        }
+        .link-gen-hint { font-size: 11px; color: #a0aec0; margin-top: 6px; line-height: 1.5; }
+        .link-gen-result {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 210px;
+            overflow-y: auto;
+        }
+        .lg-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 6px 9px;
+        }
+        .lg-id {
+            font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: #4c51bf;
+            white-space: nowrap;
+        }
+        .lg-btn {
+            margin-left: auto;
+            font-size: 11px;
+            font-weight: 600;
+            background: #eef2ff;
+            color: #4c51bf;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 9px;
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+            transition: background 0.15s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .lg-btn:hover { background: #e0e7ff; text-decoration: none; }
+        .lg-warn { color: #c53030; font-size: 12px; }
+        .lg-warn small { display: block; color: #a0aec0; font-size: 11px; }
         h1 {
             color: #2d3748;
             font-size: 28px;
@@ -332,6 +378,13 @@
 
             <!-- 右栏：日期和时间转换 -->
             <div class="column">
+                <div class="panel link-gen">
+                    <div class="panel-title">🔗 playid转链接</div>
+                    <textarea id="linkGenInput" placeholder="输入 PlayID，如 50639-184116（不必存在于库中）" spellcheck="false"></textarea>
+                    <p class="link-gen-hint">多个用换行、逗号或空格分隔 · 自动拼出后台链接</p>
+                    <div class="link-gen-result" id="linkGenResult"></div>
+                </div>
+
                 <div class="panel">
                     <div class="panel-title">📅 日期格式转换</div>
 
@@ -863,6 +916,50 @@
                 reverseConvert();
             }
         });
+
+        // ========== 右上角：直接生成 PlayID 链接 ==========
+        // 与上面各面板无关，输入任意 PlayID 即可拼出后台链接，不要求它存在于任何库里
+        function buildPlayLink(id) {
+            const parts = id.split('-');
+            return 'https://zoo.ibu.ctripcorp.com/promo/detail/' + parts[0] +
+                   '/mechanics/mechanism/edit/' + parts[1];
+        }
+
+        function escapeHtmlLg(s) {
+            return String(s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function renderLinkGen() {
+            const box = document.getElementById('linkGenResult');
+            const ids = document.getElementById('linkGenInput').value
+                .split(/[\s,，、]+/).map(s => s.trim()).filter(Boolean);
+
+            if (!ids.length) { box.innerHTML = ''; return; }
+
+            const seen = new Set();
+            const rows = [];
+            ids.forEach(id => {
+                if (seen.has(id)) return;
+                seen.add(id);
+
+                if (!/^\d+-\d+$/.test(id)) {
+                    rows.push('<div class="lg-row"><span class="lg-warn">' +
+                        escapeHtmlLg(id) + '<small>格式应为「数字-数字」，如 50639-184116</small></span></div>');
+                    return;
+                }
+
+                const link = buildPlayLink(id);
+                rows.push('<div class="lg-row">' +
+                    '<span class="lg-id">' + escapeHtmlLg(id) + '</span>' +
+                    '<a class="lg-btn" href="' + link + '" target="_blank" rel="noopener" title="在新窗口打开">打开链接 ↗</a>' +
+                    '</div>');
+            });
+            box.innerHTML = rows.join('');
+        }
+
+        document.getElementById('linkGenInput').addEventListener('input', renderLinkGen);
     </script>
 </body>
 </html>
