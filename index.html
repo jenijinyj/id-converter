@@ -56,23 +56,40 @@
             white-space: nowrap;
         }
         .lg-btn {
-            margin-left: auto;
-            font-size: 11px;
-            font-weight: 600;
-            background: #eef2ff;
-            color: #4c51bf;
+            flex: 1;
+            text-align: center;
+            padding: 9px 12px;
             border: none;
-            border-radius: 6px;
-            padding: 4px 9px;
-            cursor: pointer;
+            border-radius: 8px;
             font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            cursor: pointer;
             white-space: nowrap;
-            transition: background 0.15s;
+            display: block;
             text-decoration: none;
-            display: inline-block;
+            color: #fff;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+            transition: all 0.2s;
         }
-        .lg-btn:hover { background: #e0e7ff; text-decoration: none; }
-        .lg-warn { color: #c53030; font-size: 12px; }
+        .lg-btn:hover {
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            transform: translateY(-1px);
+        }
+        .lg-btn:active { transform: translateY(0); }
+        /* 空输入时按钮常驻但不可点 */
+        .lg-id.is-idle { color: #cbd5e0; }
+        .lg-btn.is-idle {
+            opacity: 0.45;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .lg-btn.is-idle:hover { transform: none; box-shadow: none; }
+        .lg-btn.is-inline { flex: 0 0 auto; }
+        .lg-warn { flex: 1; color: #c53030; font-size: 12px; }
         .lg-warn small { display: block; color: #a0aec0; font-size: 11px; }
         h1 {
             color: #2d3748;
@@ -936,17 +953,24 @@
             const ids = document.getElementById('linkGenInput').value
                 .split(/[\s,，、]+/).map(s => s.trim()).filter(Boolean);
 
-            if (!ids.length) { box.innerHTML = ''; return; }
-
             const seen = new Set();
             const rows = [];
+
+            if (!ids.length) {
+                // 空输入时按钮常驻（变暗、不可点），避免出现/消失造成跳动
+                rows.push('<div class="lg-row">' +
+                    '<span class="lg-btn is-idle">打开链接 ↗</span>' +
+                    '</div>');
+            }
+
             ids.forEach(id => {
                 if (seen.has(id)) return;
                 seen.add(id);
 
                 if (!/^\d+-\d+$/.test(id)) {
                     rows.push('<div class="lg-row"><span class="lg-warn">' +
-                        escapeHtmlLg(id) + '<small>格式应为「数字-数字」，如 50639-184116</small></span></div>');
+                        escapeHtmlLg(id) + '<small>格式应为「数字-数字」，如 50639-184116</small></span>' +
+                        '<span class="lg-btn is-idle is-inline">打开链接 ↗</span></div>');
                     return;
                 }
 
@@ -960,6 +984,7 @@
         }
 
         document.getElementById('linkGenInput').addEventListener('input', renderLinkGen);
+        renderLinkGen();
     </script>
 </body>
 </html>
