@@ -309,11 +309,11 @@
     <div class="container">
         <div class="header">
             <h1>📝 ID 转换工具</h1>
-            <div class="subtitle">ID 格式转换 · 日期时间转换 · 区间分解</div>
+            <div class="subtitle">ID 格式转换 · 日期时间转换 · 区间分解 · Excel 转 ｜</div>
         </div>
 
         <div class="info">
-            <strong>使用说明：</strong>左栏 ID 转换（竖排 ↔ 逗号 ↔ SQL）与区间分解 · 右栏日期与时间格式转换
+            <strong>使用说明：</strong>左栏 ID 转换（竖排 ↔ 逗号 ↔ SQL）与区间分解 · 右栏 playid 转链接、Excel 转 ｜、日期与时间格式转换
         </div>
 
         <div class="main-layout">
@@ -400,6 +400,25 @@
                     <textarea id="linkGenInput" placeholder="输入 PlayID，如 50639-184116（不必存在于库中）" spellcheck="false"></textarea>
                     <p class="link-gen-hint">多个用换行、逗号或空格分隔 · 自动拼出后台链接</p>
                     <div class="link-gen-result" id="linkGenResult"></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">📊 Excel 转 ｜ 分隔</div>
+
+                    <div class="section">
+                        <label for="pipeInput">粘贴 Excel 表格：</label>
+                        <textarea id="pipeInput" placeholder="在 Excel 里框选后复制，直接粘到这里（自动转换）&#10;每一行作为一行，单元格之间用 ｜ 隔开"></textarea>
+                    </div>
+
+                    <div class="section">
+                        <label for="pipeOutput">结果：</label>
+                        <textarea id="pipeOutput" readonly placeholder="转换结果"></textarea>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="copy-btn" id="pipeCopyBtn" onclick="copyPipe()" disabled>复 制</button>
+                        <button class="clear-btn" onclick="clearPipe()">清 空</button>
+                    </div>
                 </div>
 
                 <div class="panel">
@@ -985,6 +1004,65 @@
 
         document.getElementById('linkGenInput').addEventListener('input', renderLinkGen);
         renderLinkGen();
+
+        // ========== Excel 表格 → 全角竖线分隔 ==========
+        // 从 Excel 复制出来的是 Tab 分隔文本；单元格内含换行时，Excel 会用双引号把该格包起来
+        function parseClipboardTable(text) {
+            const rows = [];
+            let row = [], field = '', inQuotes = false, i = 0;
+            while (i < text.length) {
+                const c = text[i];
+                if (inQuotes) {
+                    if (c === '"') {
+                        if (text[i + 1] === '"') { field += '"'; i += 2; }
+                        else { inQuotes = false; i++; }
+                    } else { field += c; i++; }
+                } else {
+                    if (c === '"') { inQuotes = true; i++; }
+                    else if (c === '\t') { row.push(field); field = ''; i++; }
+                    else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; }
+                    else if (c === '\r') { i++; }
+                    else { field += c; i++; }
+                }
+            }
+            row.push(field);
+            rows.push(row);
+            // 去掉 Excel 复制时尾部带出来的空白行
+            while (rows.length && rows[rows.length - 1].every(f => f === '')) rows.pop();
+            return rows;
+        }
+
+        function convertToPipe() {
+            const src = document.getElementById('pipeInput').value;
+            const out = document.getElementById('pipeOutput');
+            const btn = document.getElementById('pipeCopyBtn');
+            if (!src.trim()) { out.value = ''; btn.disabled = true; return; }
+            out.value = parseClipboardTable(src).map(row =>
+                // 单元格内部的换行压成空格，保证「Excel 一行 = 输出一行」
+                row.map(f => f.replace(/\s*\n\s*/g, ' ')).join('｜')
+            ).join('\n');
+            btn.disabled = false;
+        }
+
+        function copyPipe() {
+            const out = document.getElementById('pipeOutput');
+            if (!out.value) return;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(out.value)
+                    .then(showCopySuccess)
+                    .catch(() => fallbackCopy(out.value));
+            } else {
+                fallbackCopy(out.value);
+            }
+        }
+
+        function clearPipe() {
+            document.getElementById('pipeInput').value = '';
+            document.getElementById('pipeOutput').value = '';
+            document.getElementById('pipeCopyBtn').disabled = true;
+        }
+
+        document.getElementById('pipeInput').addEventListener('input', convertToPipe);
     </script>
 </body>
 </html>
